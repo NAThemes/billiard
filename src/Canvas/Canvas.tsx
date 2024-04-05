@@ -1,4 +1,5 @@
 import { useEffect, useRef, MouseEvent, useState } from "react";
+import axios from "axios";
 
 type buttonState = 'down' | 'up';
 
@@ -77,25 +78,35 @@ const Canvas = ({ width, height }: CanvasProps) => {
     [mouse.currentPos.x, mouse.currentPos.y] = [e.clientX, e.clientY];
   }
 
-/*   function updateBalls()  {
-    for (let i = 0; i < ballsRef.current.length; i++) {
-      let acceleration = {x: 0, y: 0};
-      for (let j = 0; j < ballsRef.current.length; j++) {
+  function updateBalls(balls : Ball[])  {
+    for (let i = 0; i < balls.length; i++) {
+      for (let j = 0; j < balls.length; j++) {
         if (i === j) continue;
-        let [a, b] = [ballsRef.current[i], ballsRef.current[j]];
+        let [a, b] = [balls[i], balls[j]]; /* {x: 296.5, y: 459.5} and {x: 266.5, y: 407.5384757729337} */
 
         let delta = {x: b.pos.x - a.pos.x, y: b.pos.y - a.pos.y};
-        let dist = Math.sqrt(delta.x * delta.x + delta.y * delta.y) || 1;
-        let force = (dist - 300) / dist * b.mass;
-
-        acceleration.x += delta.x * force;
-        acceleration.y += delta.y * force;
+        let dist = Math.sqrt(delta.x * delta.x + delta.y * delta.y);
+        if (Math.round(dist) >= a.radius) {
+          a.vel.x *= -1;
+          a.vel.x *= -1;
+        }
       }
 
-      ballsRef.current[i].vel.x = ballsRef.current[i].vel.x * 0.98 + acceleration.x * ballsRef.current[i].mass;
-      ballsRef.current[i].vel.y = ballsRef.current[i].vel.y * 0.98 + acceleration.y * ballsRef.current[i].mass;
+      balls[i].vel.x = balls[i].vel.x * 0.98;
+      balls[i].vel.y = balls[i].vel.y * 0.98;
+
+      if (balls[i].pos.x + balls[i].radius >= width || balls[i].pos.x - balls[i].radius <= 0) {
+        balls[i].vel.x *= -1;
+      }
+
+      if (balls[i].pos.y + balls[i].radius >= height || balls[i].pos.y - balls[i].radius <= 0) {
+        balls[i].vel.y *= -1;
+      }
+
+      balls[i].pos.x += balls[i].vel.x;
+      balls[i].pos.y += balls[i].vel.y;
     }
-  } */
+  }
 
   function isDown() {
     mouse.buttonState = mouse.buttonState === 'up' ? 'down' : 'up';
@@ -124,10 +135,13 @@ const Canvas = ({ width, height }: CanvasProps) => {
           if (movedBall) {
             movedBall.pos.x = mouse.currentPos.x;
             movedBall.pos.y = mouse.currentPos.y;
+            movedBall.vel.x = mouse.currentPos.x - mouse.prevPos.x;
+            movedBall.vel.y = mouse.currentPos.y - mouse.prevPos.y;
           }
         }
 
-        /* updateBalls(); */
+        updateBalls(ballsRef.current);
+
         ballsRef.current.map(e => e.draw(context));
 
         frameRef.current = requestAnimationFrame(() => {
@@ -171,7 +185,7 @@ const Canvas = ({ width, height }: CanvasProps) => {
     return () => cancelAnimationFrame(frameRef.current);
   }, [height, width]);
 
-  return <canvas onMouseMove={setPos} onMouseUp={isUp} onMouseDown={isDown} ref={ref} width={width} height={height}/>;
+  return <canvas onMouseMove={setPos} onMouseUp={isUp} onMouseDown={isDown} ref={ref} width={300} height={500}/>;
 };
 
 Canvas.defaultProps = {
